@@ -1,19 +1,20 @@
 # Global configuration
 docker_network: webproxy
-monitoring_domain: monitoring.deltastudio.com
+monitoring_domain: monitoring.deltastudio.dev
+admin_email: admin@deltastudio.dev
 
 # Netdata configuration
 netdata_user: admin
 # Generate with: htpasswd -nb admin your_password | cut -d: -f2
-netdata_password_hash: "$2y$10$CHANGE_ME"
+netdata_password_hash: "$apr1$KPo0GTS3$KF.k/Pae2DuHEQFoJUlwk1"
 
 # Websites configuration
 websites:
   deltastudio:
     name: deltastudio-website
-    domain: deltastudio.com
-    repo: https://github.com/yourusername/deltastudio-website
-    docker_image: ghcr.io/yourusername/deltastudio-website
+    domain: deltastudio.dev
+    repo: https://github.com/pbastos/deltastudio-website
+    docker_image: ghcr.io/pbastos/deltastudio-website
     port: 3001
     environment:
       - NODE_ENV=production
