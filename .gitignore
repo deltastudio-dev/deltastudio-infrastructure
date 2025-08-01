@@ -1,0 +1,42 @@
+# Ansible
+*.retry
+ansible/inventories/*/host_vars/*
+!ansible/inventories/*/host_vars/*.example
+
+# Secrets
+*.pem
+*.key
+.env
+.env.*
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.bak
+*.backup
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Terraform (if used later)
+*.tfstate
+*.tfstate.*
+.terraform/
