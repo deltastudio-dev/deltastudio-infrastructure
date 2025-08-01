@@ -1,0 +1,11 @@
+---
+- name: Complete server setup and deployment
+  hosts: webservers
+  become: yes
+  
+  tasks:
+    - name: Run server setup
+      import_playbook: server-setup.yml
+    
+    - name: Deploy all websites
+      import_playbook: deploy-all.yml

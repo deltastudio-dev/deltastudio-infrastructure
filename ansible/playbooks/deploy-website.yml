@@ -1,0 +1,61 @@
+---
+- name: Deploy specific website
+  hosts: webservers
+  become: yes
+  vars:
+    website_config: "{{ websites[website_name] }}"
+  
+  tasks:
+    - name: Validate website name
+      fail:
+        msg: "Website '{{ website_name }}' not found in configuration"
+      when: website_name not in websites
+    
+    - name: Pull latest Docker image
+      docker_image:
+        name: "{{ website_config.docker_image }}:{{ docker_tag | default('latest') }}"
+        source: pull
+        force_source: yes
+    
+    - name: Stop existing container if running
+      docker_container:
+        name: "{{ website_config.name }}"
+        state: absent
+      ignore_errors: yes
+    
+    - name: Start website container
+      docker_container:
+        name: "{{ website_config.name }}"
+        image: "{{ website_config.docker_image }}:{{ docker_tag | default('latest') }}"
+        state: started
+        restart_policy: unless-stopped
+        networks:
+          - name: webproxy
+        ports:
+          - "{{ website_config.port }}:80"
+        env: "{{ website_config.environment | default({}) | dict2items | items2dict }}"
+        labels:
+          caddy: "{{ website_config.domain }}"
+          caddy.reverse_proxy: "{{ '{{upstreams ' + website_config.port|string + '}}' }}"
+    
+    - name: Wait for container to be healthy
+      uri:
+        url: "http://localhost:{{ website_config.port }}"
+        status_code: 200
+      register: result
+      until: result.status == 200
+      retries: 30
+      delay: 2
+      ignore_errors: yes
+    
+    - name: Update Caddy configuration
+      template:
+        src: ../templates/caddy/Caddyfile.j2
+        dest: /root/docker/caddy/Caddyfile
+        backup: yes
+    
+    - name: Reload Caddy
+      docker_container:
+        name: caddy
+        state: started
+        restart: yes

@@ -1,0 +1,56 @@
+# Managed by Ansible - Do not edit directly
+{
+    email {{ admin_email | default('admin@deltastudio.com') }}
+}
+
+{% for site_key, site in websites.items() %}
+# {{ site.name }} - {{ site.domain }}
+{{ site.domain }} {
+    reverse_proxy {{ site.name }}:{{ site.port | default(80) }}
+    
+    header {
+        # Security headers
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        X-XSS-Protection "1; mode=block"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        
+        # Remove server header
+        -Server
+    }
+    
+    # Enable compression
+    encode gzip zstd
+    
+    # Logging
+    log {
+        output file /var/log/caddy/{{ site.name }}.log {
+            roll_size 100mb
+            roll_keep 5
+            roll_keep_for 720h
+        }
+        format json
+    }
+}
+
+# WWW redirect for {{ site.domain }}
+www.{{ site.domain }} {
+    redir https://{{ site.domain }}{uri} permanent
+}
+
+{% endfor %}
+
+# Monitoring subdomain with basic auth
+{{ monitoring_domain | default('monitoring.deltastudio.com') }} {
+    reverse_proxy netdata:19999
+    
+    basicauth {
+        {{ netdata_user }} {{ netdata_password_hash }}
+    }
+    
+    header {
+        -Server
+        X-Robots-Tag "noindex, nofollow"
+    }
+}

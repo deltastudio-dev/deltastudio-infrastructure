@@ -1,0 +1,52 @@
+---
+- name: Initial server setup
+  hosts: webservers
+  become: yes
+  gather_facts: yes
+  
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+    
+    - name: Install basic packages
+      apt:
+        name:
+          - curl
+          - wget
+          - git
+          - vim
+          - htop
+          - ufw
+          - python3-pip
+        state: present
+    
+    - name: Configure firewall rules
+      ufw:
+        rule: allow
+        port: "{{ item }}"
+        proto: tcp
+      loop:
+        - "22"    # SSH
+        - "80"    # HTTP
+        - "443"   # HTTPS
+        - "19999" # Netdata
+    
+    - name: Enable firewall
+      ufw:
+        state: enabled
+        policy: deny
+        direction: incoming
+    
+    - name: Include Docker role
+      include_role:
+        name: docker
+    
+    - name: Create webproxy network
+      docker_network:
+        name: webproxy
+    
+    - name: Create monitoring network
+      docker_network:
+        name: monitoring
